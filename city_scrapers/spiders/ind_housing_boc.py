@@ -41,6 +41,13 @@ class IndHousingBocSpider(CityScrapersSpider):
             yield from self._parse_upcoming_list(response)
         elif response.css("#listWithImages"):
             yield from self._parse_archive_list(response)
+        else:
+            self.logger.warning(
+                "Unrecognized listing page template at %s — neither "
+                "#listItems nor #listWithImages found. Site markup may "
+                "have changed.",
+                response.url,
+            )
 
     def _parse_upcoming_list(self, response):
         """Follow each upcoming-meeting link on the /calendar page."""
@@ -78,6 +85,11 @@ class IndHousingBocSpider(CityScrapersSpider):
             parsed = self._parse_archive_detail(response)
 
         if parsed is None or parsed["start"] is None:
+            self.logger.warning(
+                "Could not parse a start datetime for detail page %s — "
+                "skipping this meeting.",
+                response.url,
+            )
             return
 
         meeting = Meeting(
