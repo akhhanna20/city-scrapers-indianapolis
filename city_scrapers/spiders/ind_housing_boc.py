@@ -79,7 +79,8 @@ class IndHousingBocSpider(CityScrapersSpider):
         date_hook_text = " ".join(
             response.css(".css_hook_date").css("*::text").getall()
         )
-        if "Start Date" in date_hook_text:
+        is_upcoming = "Start Date" in date_hook_text
+        if is_upcoming:
             parsed = self._parse_upcoming_detail(response)
         else:
             parsed = self._parse_archive_detail(response)
@@ -101,8 +102,8 @@ class IndHousingBocSpider(CityScrapersSpider):
             all_day=False,
             time_notes="",
             location=parsed["location"],
-            links=self._parse_links(response),
-            source=self._parse_source(response),
+            links=self._parse_links(response, is_upcoming),
+            source=response.url,
         )
 
         if parsed.get("no_meeting"):
@@ -217,14 +218,12 @@ class IndHousingBocSpider(CityScrapersSpider):
         """Strip trailing ' | <date>' and site-name suffixes from a title."""
         return (raw_title or "").split("|")[0].strip()
 
-    def _parse_links(self, response):
+    def _parse_links(self, response, is_upcoming):
         """Parse or generate links.
 
         The meeting's own detail page (reached via the href followed from
         the calendar/archive listing) is used as the attachment link.
         """
+        if is_upcoming:
+            return []
         return [{"href": response.url, "title": "Meeting Attachment"}]
-
-    def _parse_source(self, response):
-        """Parse or generate source."""
-        return response.url
